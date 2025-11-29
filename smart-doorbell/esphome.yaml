@@ -1,0 +1,459 @@
+substitutions:
+  name: "smart-doorbell"
+  friendly_name: "Smart Doorbell"
+  id_prefix: smart_doorbell
+
+  # Buzzer Tones
+  ding_dong: "Doorbell:d=4,o=4,b=100:e5,c5"
+  halloween_bell: "HalloPing:d=4,o=4,b=65:c,g#,c5"
+  jingle_bells: "jingle:d=4,o=5,b=112:8a,8a,a,8a,8a,a,8a,8c6,8f.,16g,2a,8a#,8a#,8a#.,16a#,8a#,8a,8a.,16a,8a,8g,8g,8a,g,c6"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  name_add_mac_suffix: true
+
+  project:
+    name: sopelj.smart-doorbell
+    version: "1.0"
+
+# Setup Board for ESP32 S3 N16R8
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+# Enable Logging
+logger:
+
+# API is a requirement of the dashboard import.
+api:
+
+# OTA is required for Over-the-Air updating
+ota:
+  platform: esphome
+
+# This should point to the public location of this yaml file.
+dashboard_import:
+  package_import_url: github://sopelj/esphome-projects/smart-doorbell/esphome.yaml@main
+  import_full_config: true
+
+wifi:
+  ap:
+    # Temp password configuring. Change afterwards.
+    password: "aoVa4teise3aicoyal7aephooqu"
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device.
+captive_portal:
+
+# Sets up Bluetooth LE (Only on ESP32) to allow the user
+# to provision wifi credentials to the device.
+esp32_improv:
+  authorizer: none
+
+# Sets up the improv via serial client for Wi-Fi provisioning
+improv_serial:
+
+# Enable PSRAM
+psram:
+  mode: octal
+  speed: 80MHz
+
+# I2C for Camera
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  id: camera_i2c
+
+esp32_camera_web_server:
+  - mode: STREAM
+    port: 8080
+
+# Camera
+esp32_camera:
+  external_clock:
+    pin: GPIO15
+    frequency: 20MHz
+  i2c_id: camera_i2c
+  data_pins: [GPIO11, GPIO9, GPIO8, GPIO10, GPIO12, GPIO18, GPIO17, GPIO16]
+  vsync_pin: GPIO6
+  href_pin: GPIO7
+  pixel_clock_pin: GPIO13
+  resolution: 800x600
+  frame_buffer_location: PSRAM
+  jpeg_quality: 30
+  vertical_flip: false
+  name: "Camera"
+  id: ${id_prefix}_camera
+
+# Buzzer
+rtttl:
+  output: rtttl_output
+  id: rtttl_buzzer
+  gain: 0.8
+
+
+# SPI for Display
+spi:
+  clk_pin: GPIO38
+  mosi_pin: GPIO39
+
+# Sensors
+sensor:
+  # Temp/Pressure Sensor
+  - platform: bmp085
+    temperature:
+      name: $friendly_name Temperature
+      id: ${id_prefix}_temperature
+    pressure:
+      name: $friendly_name Pressure
+      id: ${id_prefix}_pressure
+    update_interval: 60s
+
+  # Photoresistor
+  - platform: adc
+    pin: GPIO1
+    name: "LUX Sensor"
+    update_interval: '30s'
+    unit_of_measurement: lux
+    filters:
+      - lambda: |-
+          return (x / 10000.0) * 2000000.0;
+
+text:
+  - platform: lvgl
+    widget: lbl_message
+    name: "$friendly_name Custom Text"
+    id: ${id_prefix}_custom_text
+    icon: mdi:text-short
+    mode: TEXT
+    on_value:
+      then:
+        - light.turn_on: ${id_prefix}_backlight
+        - if:
+            condition:
+              lambda: !lambda |
+                return id(${id_prefix}_custom_text).state.c_str() == "";
+            then:
+              - script.execute: update_message_page
+        - lvgl.page.show: message_page
+
+
+  - platform: lvgl
+    widget: lbl_welcome_names
+    name: "$friendly_name Names to Welcome"
+    id: ${id_prefix}_names_to_welcome
+    icon: mdi:account-multiple
+    mode: TEXT
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: !lambda |
+                return id(${id_prefix}_names_to_welcome).state.c_str() == "";
+            then:
+              - script.execute: update_message_page
+            else:
+              - lvgl.page.show: welcome_home_page
+
+# Fonts for display
+font:
+  - file: "gfonts://M+PLUS+Rounded+1c"
+    id: m_plus_ttf
+    size: 22
+    bpp: 4
+    glyphs: '/\!"%&()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ aâàäbcdeëéêfghijklmnñopqrstuvwxyz！あぁかさたないぃきしちにうぅくすつぬえぇけせてねおぉこそとのゔっんはまやゃらひみりふむゆゅるへめれほもよょろわがざだばぱゐぎじぢびぴぐずづぶぷげぜでべぺをごぞどぼぽーメリクスマハッピロウィン。、¡'
+
+# Create some colours for the display
+color:
+  - id: white
+    hex: "ffffff"
+  - id: black
+    hex: "000000"
+  - id: orange
+    hex: "dc6601"
+  - id: purple
+    hex: "7c40ff"
+
+# Configure 1.69" Display
+display:
+  - platform: mipi_spi
+    model: ST7789V
+    invert_colors: true
+    dimensions:
+      height: 280
+      width: 240
+      offset_height: 20
+    dc_pin: GPIO40
+    cs_pin: GPIO42
+    reset_pin: GPIO41
+    rotation: 180
+
+# Create widgets
+lvgl:
+  bg_color: black
+  pages:
+    - id: main_page
+      bg_color: black
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            bg_color: black
+            layout:
+              type: flex
+              pad_row: 1
+              pad_column: 4px
+              flex_align_main: center
+              flex_align_cross: start
+              flex_align_track: end
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Welcome!'
+                  id: lbl_english
+                  text_font: m_plus_ttf
+              - label:
+                  align: CENTER
+                  text: 'Bienvenue!'
+                  id: lbl_french
+                  text_font: m_plus_ttf
+              - label:
+                  align: CENTER
+                  text: 'ようこそう！'
+                  id: lbl_japanese
+                  text_font: m_plus_ttf
+              - label:
+                  align: CENTER
+                  text: '¡Bienvenido!'
+                  id: lbl_spanish
+                  text_font: m_plus_ttf
+
+    - id: message_page
+      bg_color: black
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            bg_color: black
+            layout:
+              type: flex
+              pad_row: 4
+              pad_column: 4px
+              flex_align_main: center
+              flex_align_cross: start
+              flex_align_track: end
+            widgets:
+              - label:
+                  align: CENTER
+                  text: ' '
+                  id: lbl_message
+                  text_font: m_plus_ttf
+              - obj:
+                  bg_opa: TRANSP
+                  border_opa: TRANSP
+
+    - id: welcome_home_page
+      bg_color: black
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            bg_color: black
+            layout:
+              type: flex
+              pad_row: 4
+              pad_column: 4px
+              flex_align_main: center
+              flex_align_cross: start
+              flex_align_track: end
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Welcome Home!'
+                  text_font: m_plus_ttf
+              - label:
+                  align: CENTER
+                  text: ' '
+                  text_font: m_plus_ttf
+                  id: lbl_welcome_names
+              - obj:
+                  bg_opa: TRANSP
+                  border_opa: TRANSP
+
+output:
+  # Backlight Output
+  - platform: ledc
+    pin: GPIO21
+    id: ${id_prefix}_display_backlight_pwm
+
+  # Button LED Output
+  - platform: ledc
+    pin: GPIO19
+    id: ${id_prefix}_button_led_pwm
+
+  # IR LED Output
+  - platform: ledc
+    pin: GPIO2
+    id: ${id_prefix}_ir_led_pwm
+
+  # Buzzer
+  - platform: ledc
+    id: rtttl_output
+    pin: GPIO47
+
+light:
+  # Onboard Indicator LED
+  - platform: esp32_rmt_led_strip
+    id: ${id_prefix}_indicator_led
+    name: Indicator Light
+    rgb_order: GRB
+    pin: GPIO48
+    num_leds: 1
+    chipset: WS2812
+
+  # Screen Backlight
+  - platform: monochromatic
+    output: ${id_prefix}_display_backlight_pwm
+    name: "Display Backlight"
+    id: ${id_prefix}_backlight
+    restore_mode: ALWAYS_ON
+    on_turn_on:
+      then:
+        - if:
+            condition: lvgl.is_paused
+            then:
+              - lvgl.resume:
+              - lvgl.widget.redraw:
+    on_turn_off:
+      then:
+        - lvgl.pause:
+            show_snow: true
+
+  # LED in Doorbell Button
+  - platform: monochromatic
+    output: ${id_prefix}_button_led_pwm
+    name: "Button LED"
+    id: ${id_prefix}_button_led
+    restore_mode: ALWAYS_ON
+    effects:
+      - pulse:
+          name: pulse
+          transition_length: 250ms
+          update_interval: 250ms
+
+  # IR LED
+  - platform: monochromatic
+    output: ${id_prefix}_ir_led_pwm
+    name: "IR LED"
+    id: ${id_prefix}_ir_led
+    restore_mode: ALWAYS_OFF
+
+binary_sensor:
+  # Detect movement
+  - platform: gpio
+    pin: GPIO14
+    name: "Motion"
+    id: ${id_prefix}_motion
+    device_class: motion
+    on_state:
+      then:
+        if:
+          condition:
+            binary_sensor.is_on: ${id_prefix}_motion
+          then:
+            - light.turn_on: ${id_prefix}_backlight
+
+  # Doorbell button press
+  - platform: gpio
+    name: "Button"
+    id: ${id_prefix}_button
+    pin:
+      number: GPIO20
+      mode: INPUT_PULLUP
+    filters:
+      invert:
+    on_state:
+      then:
+        if:
+          condition:
+            binary_sensor.is_on: ${id_prefix}_button
+          then:
+            - light.turn_on:
+                id: ${id_prefix}_button_led
+                effect: pulse
+            - light.turn_on: ${id_prefix}_backlight
+            - if:
+                condition:
+                  text_sensor.state:
+                    id: holiday
+                    state: "Halloween"
+                then:
+                  - rtttl.play: $halloween_bell
+                  - homeassistant.service:
+                      service: script.halloween_eerie_flicker
+                else:
+                  - rtttl.play: $ding_dong
+            - delay: 5s
+            - light.turn_on:
+                id: ${id_prefix}_button_led
+                effect: none
+
+  # Status
+  - platform: status
+    name: $friendly_name Status
+
+# Time for automations
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      # Check Every minute
+      - seconds: 0
+        minutes: '*'
+        then:
+          - if:
+              condition:
+                for:
+                  time: 60sec
+                  condition:
+                    binary_sensor.is_off: ${id_prefix}_motion
+              then:
+                - light.turn_off: ${id_prefix}_backlight
+                - script.execute: update_message_page
+                - homeassistant.service:
+                    service: input_text.set_value
+                    data:
+                      value: ""
+                      entity_id: input_text.names_to_welcome
+
+script:
+  - id: update_message_page
+    mode: single
+    then:
+      - lvgl.label.update:
+          id: lbl_english
+          text: "Welcome!"
+          text_font: m_plus_ttf
+          text_color: white
+      - lvgl.label.update:
+          id: lbl_french
+          text: "Bienvenue!"
+          text_font: m_plus_ttf
+          text_color: white
+      - lvgl.label.update:
+          id: lbl_japanese
+          text: "ようこそう！"
+          text_font: m_plus_ttf
+          text_color: white
+      - lvgl.label.update:
+          id: lbl_spanish
+          text: "¡Bienvenido!"
+          text_font: m_plus_ttf
+          text_color: white
