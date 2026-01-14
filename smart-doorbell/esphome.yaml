@@ -389,17 +389,6 @@ binary_sensor:
                 id: ${id_prefix}_button_led
                 effect: pulse
             - light.turn_on: ${id_prefix}_backlight
-            - if:
-                condition:
-                  text_sensor.state:
-                    id: holiday
-                    state: "Halloween"
-                then:
-                  - rtttl.play: $halloween_bell
-                  - homeassistant.service:
-                      service: script.halloween_eerie_flicker
-                else:
-                  - rtttl.play: $ding_dong
             - delay: 5s
             - light.turn_on:
                 id: ${id_prefix}_button_led
