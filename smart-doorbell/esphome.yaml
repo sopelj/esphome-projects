@@ -43,11 +43,6 @@ dashboard_import:
   package_import_url: github://sopelj/esphome-projects/smart-doorbell/esphome.yaml@main
   import_full_config: true
 
-wifi:
-  ap:
-    # Temp password configuring. Change afterwards.
-    password: "aoVa4teise3aicoyal7aephooqu"
-
 # In combination with the `ap` this allows the user
 # to provision wifi credentials to the device.
 captive_portal:
@@ -97,7 +92,6 @@ rtttl:
   output: rtttl_output
   id: rtttl_buzzer
   gain: 0.8
-
 
 # SPI for Display
 spi:
