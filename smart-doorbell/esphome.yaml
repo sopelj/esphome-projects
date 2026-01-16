@@ -8,10 +8,35 @@ substitutions:
   halloween_bell: "HalloPing:d=4,o=4,b=65:c,g#,c5"
   jingle_bells: "jingle:d=4,o=5,b=112:8a,8a,a,8a,8a,a,8a,8c6,8f.,16g,2a,8a#,8a#,8a#.,16a#,8a#,8a,8a.,16a,8a,8g,8g,8a,g,c6"
 
+  # Messages
+  welcome_message_en: "Welcome!"
+  welcome_message_fr: "Bienvenue!"
+  welcome_message_ja: "ようこそう！"
+  welcome_message_es: "¡Bienvenido!"
+
+  # Style:
+  font_en: m_plus_ttf
+  font_fr: m_plus_ttf
+  font_ja: m_plus_ttf
+  font_es: m_plus_ttf
+  custom_message_font: m_plus_ttf
+
 esphome:
   name: "${name}"
   friendly_name: "${friendly_name}"
   name_add_mac_suffix: true
+  platformio_options:
+    build_flags:
+      -DARDUINO_ESP32S3_DEV
+      -DARDUINO_RUNNING_CORE=1
+      -DARDUINO_EVENT_RUNNING_CORE=1
+      -DBOARD_HAS_PSRAM
+      -mfix-esp32-psram-cache-issue
+    board_build.f_cpu: 240000000L
+    board_build.f_flash": 80000000L
+    board_build.arduino.memory_type: qio_opi
+    board_build.flash_mode: dio
+    board_upload.maximum_ram_size: 524288
 
   project:
     name: sopelj.smart-doorbell
@@ -36,7 +61,7 @@ api:
 
 # OTA is required for Over-the-Air updating
 ota:
-  platform: esphome
+  - platform: esphome
 
 # This should point to the public location of this yaml file.
 dashboard_import:
@@ -138,24 +163,6 @@ text:
               - script.execute: update_message_page
         - lvgl.page.show: message_page
 
-
-  - platform: lvgl
-    widget: lbl_welcome_names
-    name: "$friendly_name Names to Welcome"
-    id: ${id_prefix}_names_to_welcome
-    icon: mdi:account-multiple
-    mode: TEXT
-    on_value:
-      then:
-        - if:
-            condition:
-              lambda: !lambda |
-                return id(${id_prefix}_names_to_welcome).state.c_str() == "";
-            then:
-              - script.execute: update_message_page
-            else:
-              - lvgl.page.show: welcome_home_page
-
 # Fonts for display
 font:
   - file: "gfonts://M+PLUS+Rounded+1c"
@@ -197,86 +204,48 @@ lvgl:
       bg_color: black
       widgets:
         - obj:
+            id: obj_welcome_messages
             width: 100%
             height: 100%
             bg_color: black
-            layout:
-              type: flex
-              pad_row: 1
-              pad_column: 4px
-              flex_align_main: center
-              flex_align_cross: start
-              flex_align_track: end
+            layout: vertical
             widgets:
               - label:
                   align: CENTER
-                  text: 'Welcome!'
+                  text: $welcome_message_en
                   id: lbl_english
-                  text_font: m_plus_ttf
+                  text_font: $font_en
               - label:
                   align: CENTER
-                  text: 'Bienvenue!'
+                  text: $welcome_message_fr
                   id: lbl_french
-                  text_font: m_plus_ttf
+                  text_font: $font_fr
               - label:
                   align: CENTER
-                  text: 'ようこそう！'
+                  text: $welcome_message_ja
                   id: lbl_japanese
-                  text_font: m_plus_ttf
+                  text_font: $font_ja
               - label:
                   align: CENTER
-                  text: '¡Bienvenido!'
+                  text: $welcome_message_es
                   id: lbl_spanish
-                  text_font: m_plus_ttf
+                  text_font: $font_es
 
     - id: message_page
       bg_color: black
       widgets:
         - obj:
+            id: obj_custom_messages
             width: 100%
             height: 100%
             bg_color: black
-            layout:
-              type: flex
-              pad_row: 4
-              pad_column: 4px
-              flex_align_main: center
-              flex_align_cross: start
-              flex_align_track: end
+            layout: vertical
             widgets:
               - label:
                   align: CENTER
                   text: ' '
                   id: lbl_message
-                  text_font: m_plus_ttf
-              - obj:
-                  bg_opa: TRANSP
-                  border_opa: TRANSP
-
-    - id: welcome_home_page
-      bg_color: black
-      widgets:
-        - obj:
-            width: 100%
-            height: 100%
-            bg_color: black
-            layout:
-              type: flex
-              pad_row: 4
-              pad_column: 4px
-              flex_align_main: center
-              flex_align_cross: start
-              flex_align_track: end
-            widgets:
-              - label:
-                  align: CENTER
-                  text: 'Welcome Home!'
-                  text_font: m_plus_ttf
-              - label:
-                  align: CENTER
-                  text: ' '
-                  text_font: m_plus_ttf
-                  id: lbl_welcome_names
+                  text_font: $custom_message_font
               - obj:
                   bg_opa: TRANSP
                   border_opa: TRANSP
@@ -407,14 +376,6 @@ time:
                   time: 60sec
                   condition:
                     binary_sensor.is_off: ${id_prefix}_motion
-              then:
-                - light.turn_off: ${id_prefix}_backlight
-                - script.execute: update_message_page
-                - homeassistant.service:
-                    service: input_text.set_value
-                    data:
-                      value: ""
-                      entity_id: input_text.names_to_welcome
 
 script:
   - id: update_message_page
@@ -422,21 +383,21 @@ script:
     then:
       - lvgl.label.update:
           id: lbl_english
-          text: "Welcome!"
-          text_font: m_plus_ttf
+          text: $welcome_message_en
+          text_font: $font_en
           text_color: white
       - lvgl.label.update:
           id: lbl_french
-          text: "Bienvenue!"
-          text_font: m_plus_ttf
+          text: $welcome_message_fr
+          text_font: $font_fr
           text_color: white
       - lvgl.label.update:
           id: lbl_japanese
-          text: "ようこそう！"
-          text_font: m_plus_ttf
+          text: $welcome_message_ja
+          text_font: $font_ja
           text_color: white
       - lvgl.label.update:
           id: lbl_spanish
-          text: "¡Bienvenido!"
-          text_font: m_plus_ttf
+          text: $welcome_message_es
+          text_font: $font_es
           text_color: white
