@@ -71,3 +71,11 @@ font:
     bpp: 4
     glyphs: '/\!"%&()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ aâàäbcdeëéêfghijklmnñopqrstuvwxyz！あぁかさたないぃきしちにうぅくすつぬえぇけせてねおぉこそとのゔっんはまやゃらひみりふむゆゅるへめれほもよょろわがざだばぱゐぎじぢびぴぐずづぶぷげぜでべぺをごぞどぼぽーメリクスマハッピロウィン。、¡'
 ```
+
+## 3D Printing
+
+You can find the STL files on [Printables](https://www.printables.com/model/1497893-smart-doorbell)
+
+You need one of each peice, except for the back which you should choose between the flat and the 45 degree version.
+
+You can print with pretty much any material, but I used PETG for more UV resistance.
