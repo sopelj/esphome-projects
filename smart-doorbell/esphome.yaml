@@ -21,6 +21,9 @@ substitutions:
   font_es: m_plus_ttf
   custom_message_font: m_plus_ttf
 
+  # Settings
+  screen_timeout: 60sec
+
 esphome:
   name: "${name}"
   friendly_name: "${friendly_name}"
@@ -373,9 +376,12 @@ time:
           - if:
               condition:
                 for:
-                  time: 60sec
+                  time: $screen_timeout
                   condition:
                     binary_sensor.is_off: ${id_prefix}_motion
+              then:
+                - light.turn_off: ${id_prefix}_backlight
+                - script.execute: update_message_page
 
 script:
   - id: update_message_page
