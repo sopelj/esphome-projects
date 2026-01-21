@@ -71,18 +71,6 @@ dashboard_import:
   package_import_url: github://sopelj/esphome-projects/smart-doorbell/esphome.yaml@main
   import_full_config: true
 
-# In combination with the `ap` this allows the user
-# to provision wifi credentials to the device.
-captive_portal:
-
-# Sets up Bluetooth LE (Only on ESP32) to allow the user
-# to provision wifi credentials to the device.
-esp32_improv:
-  authorizer: none
-
-# Sets up the improv via serial client for Wi-Fi provisioning
-improv_serial:
-
 # Enable PSRAM
 psram:
   mode: octal
