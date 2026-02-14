@@ -337,18 +337,7 @@ binary_sensor:
       invert:
     on_state:
       then:
-        if:
-          condition:
-            binary_sensor.is_on: ${id_prefix}_button
-          then:
-            - light.turn_on:
-                id: ${id_prefix}_button_led
-                effect: pulse
-            - light.turn_on: ${id_prefix}_backlight
-            - delay: 5s
-            - light.turn_on:
-                id: ${id_prefix}_button_led
-                effect: none
+        - script.execute: doorbell_press
 
   # Status
   - platform: status
@@ -374,6 +363,22 @@ time:
                 - script.execute: update_message_page
 
 script:
+  - id: doorbell_press
+    mode: single
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: ${id_prefix}_button
+          then:
+            - light.turn_on:
+                id: ${id_prefix}_button_led
+                effect: pulse
+            - light.turn_on: ${id_prefix}_backlight
+            - rtttl.play: $ding_dong
+            - delay: 5s
+            - light.turn_on:
+                id: ${id_prefix}_button_led
+                effect: none
   - id: update_message_page
     mode: single
     then:
