@@ -160,7 +160,9 @@ font:
     id: m_plus_ttf
     size: 22
     bpp: 4
-    glyphs: '/\!"%&()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ aâàäbcdeëéêfghijklmnñopqrstuvwxyz！あぁかさたないぃきしちにうぅくすつぬえぇけせてねおぉこそとのゔっんはまやゃらひみりふむゆゅるへめれほもよょろわがざだばぱゐぎじぢびぴぐずづぶぷげぜでべぺをごぞどぼぽーメリクスマハッピロウィン。、¡'
+    glyphs: >
+      /\!"%&()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ aâàäbcdeëéêfghijklmnñopqrstuvwxyz！¡'
+      あぁいぃうぅえぇおぉかきくけこさしすせそたちつってとなにぬねのはひふへほまみむめもやゃゆゅよょらりるれろわをんがざだばぱゔぎじぢびぴぐずづぶぷげぜでべぺをごぞどぼぽ。、ィーアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン
 
 # Create some colours for the display
 color:
