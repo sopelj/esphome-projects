@@ -187,10 +187,10 @@ display:
     dc_pin: GPIO40
     cs_pin: GPIO42
     reset_pin: GPIO41
-    rotation: 180
 
 # Create widgets
 lvgl:
+  rotation: 180
   bg_color: black
   pages:
     - id: main_page
