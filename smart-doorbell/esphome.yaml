@@ -59,6 +59,10 @@ esp32:
 # Enable Logging
 logger:
 
+wifi:
+  power_save_mode: NONE
+  fast_connect: True
+
 # API is a requirement of the dashboard import.
 api:
 
