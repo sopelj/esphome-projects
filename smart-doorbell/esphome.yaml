@@ -59,6 +59,8 @@ esp32:
 # Enable Logging
 logger:
 
+network:
+
 wifi:
   power_save_mode: NONE
   fast_connect: True
